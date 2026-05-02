@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Config Manager — eToro Operations</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#000021; --surface:#0a0a3a; --surface2:#0d0d45;
+  --border:#1a1a5e; --border2:#2a2a7e;
+  --green:#6AAE22; --gdim:rgba(106,174,34,0.12); --gglow:rgba(106,174,34,0.25);
+  --lgreen:#7BEC92; --white:#fff; --muted:#8888aa;
+  --red:#E24B4A; --rdim:rgba(226,75,74,0.15);
+  --amber:#EF9F27; --adim:rgba(239,159,39,0.15);
+  --blue:#378ADD; --bdim:rgba(55,138,221,0.12);
+  --font:'Montserrat',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--white);font-family:var(--font);font-size:13px;min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── HEADER ── */
+.hdr{padding:16px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0;}
+.hdr-l{display:flex;flex-direction:column;gap:2px;}
+.hdr-title{font-size:15px;font-weight:700;letter-spacing:.3px;}
+.hdr-sub{font-size:10px;color:var(--muted);font-weight:500;letter-spacing:.5px;text-transform:uppercase;}
+.hdr-r{display:flex;align-items:center;gap:14px;}
+.sync-lbl{font-size:11px;color:var(--muted);}
+.env-pill{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:4px;background:rgba(226,75,74,0.1);border:1px solid rgba(226,75,74,0.35);font-size:10px;font-weight:700;color:var(--red);letter-spacing:1.5px;}
+.env-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.u-pill{display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:4px;background:var(--bg);border:1px solid var(--border);}
+.u-av{width:22px;height:22px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#000;}
+.u-nm{font-size:11px;color:var(--muted);font-weight:500;}
+
+/* ── FILTERS ── */
+.filters{padding:10px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;background:var(--bg);flex-shrink:0;flex-wrap:wrap;}
+.fg{display:flex;align-items:center;gap:6px;}
+.fg-lbl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-right:2px;}
+.fbtn{padding:5px 13px;border-radius:4px;font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:transparent;transition:all .2s;}
+.fbtn:hover{color:var(--white);border-color:var(--border2);}
+.fbtn.active{background:var(--green);border-color:var(--green);color:#000;font-weight:700;}
+.f-sep{width:1px;height:20px;background:var(--border);}
+.hdr-actions{display:flex;gap:8px;margin-left:auto;}
+.act-btn{padding:5px 13px;border-radius:4px;font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:transparent;transition:all .2s;}
+.act-btn:hover{color:var(--white);border-color:var(--border2);}
+
+/* ── MAIN ── */
+.main{flex:1;padding:24px 32px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;}
+.card-title{font-size:11px;font-weight:700;color:var(--white);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.card-title .sub{font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;}
+
+/* ── CONFIG TABLE ── */
+.tw{overflow-x:auto;}
+.cft{width:100%;border-collapse:collapse;min-width:860px;}
+.cft thead th{padding:9px 14px;text-align:left;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.cft thead th:first-child{padding-left:0;}
+.cft tbody tr{border-bottom:1px solid rgba(26,26,94,.5);transition:background .15s;}
+.cft tbody tr:hover{background:rgba(255,255,255,.02);}
+.cft tbody tr.rch{background:rgba(106,174,34,.04);}
+.cft td{padding:11px 14px;vertical-align:middle;white-space:nowrap;}
+.cft td:first-child{padding-left:0;}
+.rc{display:flex;align-items:center;gap:10px;}
+.rdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.rname{font-size:13px;font-weight:600;}
+.rcode{font-size:10px;color:var(--muted);font-weight:500;margin-top:1px;}
+.tgl{width:36px;height:20px;border-radius:10px;cursor:pointer;position:relative;border:none;transition:background .2s;flex-shrink:0;}
+.tgl.on{background:var(--green);}
+.tgl.off{background:#1a1a4e;border:1px solid var(--border);}
+.tgl::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;top:3px;transition:left .2s;}
+.tgl.on::after{left:19px;background:#fff;}
+.tgl.off::after{left:3px;background:var(--muted);}
+.tgl.ch{box-shadow:0 0 10px var(--gglow);}
+.val{font-size:12px;font-weight:500;}
+.val.ch{color:var(--green);font-weight:700;animation:flash 2s ease-out;}
+@keyframes flash{0%{color:var(--lgreen)}100%{color:var(--green)}}
+.risk{padding:3px 9px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;}
+.risk.low{background:var(--gdim);color:var(--green);border:1px solid var(--gglow);}
+.risk.med{background:var(--adim);color:var(--amber);border:1px solid rgba(239,159,39,.3);}
+.risk.high{background:var(--rdim);color:var(--red);border:1px solid rgba(226,75,74,.3);}
+.risk.ch{box-shadow:0 0 8px var(--gglow);}
+.sc{display:flex;align-items:center;gap:6px;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);}
+.stxt{font-size:11px;color:var(--muted);font-weight:500;}
+
+/* ── AUDIT TRAIL ── */
+.audit-list{display:flex;flex-direction:column;gap:0;max-height:180px;overflow-y:auto;}
+.audit-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(26,26,94,.5);}
+.audit-item:last-child{border-bottom:none;}
+.audit-time{font-size:10px;color:var(--muted);font-weight:500;white-space:nowrap;min-width:60px;padding-top:1px;}
+.audit-badge{padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;white-space:nowrap;}
+.audit-badge.applied{background:var(--gdim);color:var(--green);border:1px solid var(--gglow);}
+.audit-badge.cancelled{background:rgba(136,136,170,.1);color:var(--muted);border:1px solid var(--border);}
+.audit-summary{font-size:11px;color:var(--muted);line-height:1.5;flex:1;}
+.audit-count{font-size:10px;color:var(--muted);font-weight:500;white-space:nowrap;padding-top:1px;}
+.audit-empty{font-size:11px;color:var(--muted);padding:16px 0;text-align:center;}
+
+/* ── AI PANEL ── */
+.ai-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.ai-hdr{padding:13px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:rgba(106,174,34,.04);}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 3s infinite;}
+.ai-title{font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1.5px;}
+.ai-status-txt{font-size:11px;color:var(--muted);}
+.ai-body{display:flex;}
+.ai-in{flex:1;padding:16px 20px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:10px;}
+.inp-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.ai-ta{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--white);font-family:var(--font);font-size:12px;padding:12px 14px;resize:none;height:64px;outline:none;transition:border-color .2s;line-height:1.6;}
+.ai-ta:focus{border-color:var(--green);}
+.ai-ta::placeholder{color:var(--muted);}
+.ai-row{display:flex;align-items:center;justify-content:space-between;}
+.ai-hint{font-size:10px;color:var(--muted);}
+.ai-btn{padding:8px 20px;background:var(--green);color:#000;border:none;border-radius:4px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .2s;}
+.ai-btn:hover{background:#7DC428;}
+.ai-btn:disabled{opacity:.4;cursor:not-allowed;}
+.ai-btn svg{width:10px;height:10px;}
+.ai-sc{width:310px;padding:16px 20px;display:flex;flex-direction:column;gap:10px;flex-shrink:0;}
+.sc-tabs{display:flex;gap:6px;}
+.sc-tab{padding:4px 11px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:transparent;transition:all .2s;font-family:var(--font);}
+.sc-tab:hover{color:var(--white);border-color:var(--border2);}
+.sc-tab.active{background:var(--surface2);border-color:var(--border2);color:var(--white);}
+.sc-list{display:flex;flex-direction:column;gap:5px;}
+.sc-item{padding:8px 12px;border-radius:5px;background:var(--bg);border:1px solid var(--border);cursor:pointer;transition:all .2s;}
+.sc-item:hover{border-color:var(--green);background:var(--gdim);}
+.sc-txt{font-size:10px;color:var(--muted);line-height:1.5;}
+.sc-item:hover .sc-txt{color:var(--white);}
+
+/* ── MODAL OVERLAY ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,10,.85);display:none;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px);}
+.overlay.vis{display:flex;}
+
+/* ── MODAL ── */
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;width:820px;max-width:95vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(106,174,34,.1),0 0 0 1px var(--border2);}
+.modal-hdr{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-title{font-size:13px;font-weight:700;letter-spacing:.3px;}
+.modal-close{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;transition:color .2s;font-family:var(--font);}
+.modal-close:hover{color:var(--white);}
+
+/* STEP INDICATOR */
+.steps{display:flex;align-items:center;gap:0;padding:0 24px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+.step{display:flex;align-items:center;gap:8px;padding:12px 0;position:relative;}
+.step+.step::before{content:'';width:40px;height:1px;background:var(--border);margin:0 12px;}
+.step-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1px solid var(--border);color:var(--muted);background:var(--surface);transition:all .3s;flex-shrink:0;}
+.step.active .step-num{background:var(--green);border-color:var(--green);color:#000;}
+.step.done .step-num{background:var(--gdim);border-color:var(--gglow);color:var(--green);}
+.step-lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;transition:color .3s;}
+.step.active .step-lbl{color:var(--white);}
+.step.done .step-lbl{color:var(--green);}
+
+/* MODAL BODY */
+.modal-body{flex:1;overflow-y:auto;padding:24px;}
+
+/* ── STEP 1: THINKING ── */
+.thinking-panel{display:flex;flex-direction:column;gap:16px;}
+.thinking-request{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;}
+.req-lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.req-txt{font-size:12px;color:var(--white);line-height:1.6;font-style:italic;}
+.thinking-stream{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px 16px;min-height:140px;}
+.stream-lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.spin{width:11px;height:11px;border:2px solid var(--gdim);border-top-color:var(--green);border-radius:50%;animation:rot .8s linear infinite;flex-shrink:0;}
+@keyframes rot{to{transform:rotate(360deg)}}
+.stream-lines{display:flex;flex-direction:column;gap:5px;}
+.stream-line{display:flex;align-items:center;gap:10px;font-size:11px;opacity:0;animation:appear .3s ease forwards;}
+@keyframes appear{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.sl-icon{font-size:12px;flex-shrink:0;}
+.sl-text{color:var(--muted);}
+.sl-text.done{color:var(--white);}
+.sl-text.highlight{color:var(--green);font-weight:600;}
+.sl-check{color:var(--green);font-size:12px;flex-shrink:0;}
+
+/* ── STEP 2: REVIEW ── */
+.review-panel{display:flex;flex-direction:column;gap:20px;}
+.review-summary-box{background:var(--gdim);border:1px solid var(--gglow);border-radius:6px;padding:14px 16px;}
+.rsb-lbl{font-size:9px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.rsb-txt{font-size:12px;color:var(--white);line-height:1.6;}
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.rcard{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px;}
+.rcard-region{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.rcard-changes{display:flex;flex-direction:column;gap:7px;}
+.rchange{display:flex;flex-direction:column;gap:3px;}
+.rchange-field{font-size:10px;color:var(--muted);font-weight:500;}
+.rchange-diff{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;}
+.r-old{color:var(--red);text-decoration:line-through;font-weight:500;}
+.r-arr{color:var(--muted);}
+.r-new{color:var(--green);}
+.review-reasoning{background:var(--bdim);border:1px solid rgba(55,138,221,.2);border-radius:6px;padding:14px 16px;}
+.rr-lbl{font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.rr-txt{font-size:11px;color:var(--muted);line-height:1.7;}
+.chart-section{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:16px;}
+.chart-lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.chart-wrap{height:160px;position:relative;}
+
+/* ── MODAL FOOTER ── */
+.modal-ftr{padding:16px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg);}
+.ftr-note{font-size:11px;color:var(--muted);}
+.ftr-btns{display:flex;gap:10px;}
+.btn-cancel{padding:9px 20px;border-radius:4px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:transparent;transition:all .2s;}
+.btn-cancel:hover{color:var(--white);border-color:var(--border2);}
+.btn-confirm{padding:9px 24px;background:var(--green);color:#000;border:none;border-radius:4px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:background .2s;display:flex;align-items:center;gap:8px;}
+.btn-confirm:hover{background:#7DC428;}
+.btn-confirm svg{width:12px;height:12px;}
+
+/* ── STEP 3 DONE ── */
+.done-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px 0;}
+.done-icon{width:56px;height:56px;border-radius:50%;background:var(--gdim);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:24px;animation:pop .4s ease;}
+@keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.1)}100%{transform:scale(1)}}
+.done-title{font-size:16px;font-weight:700;color:var(--green);}
+.done-sub{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;max-width:400px;}
+.done-count{padding:6px 16px;background:var(--gdim);border:1px solid var(--gglow);border-radius:20px;font-size:12px;font-weight:600;color:var(--green);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ── STATUS BANNER ── */
+.status-banner{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.sb-item{display:flex;align-items:center;gap:8px;}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sb-dot.green{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sb-dot.amber{background:var(--amber);box-shadow:0 0 6px var(--amber);}
+.sb-dot.red{background:var(--red);box-shadow:0 0 6px var(--red);}
+.sb-label{font-size:10px;color:var(--muted);font-weight:500;}
+.sb-value{font-size:11px;font-weight:700;color:var(--white);}
+.sb-sep{width:1px;height:16px;background:var(--border);}
+
+/* ── AUDIT EXPANDABLE ── */
+.audit-item{cursor:pointer;}
+.audit-item:hover{background:rgba(255,255,255,.02);}
+.audit-detail{display:none;padding:10px 0 4px 0;border-top:1px solid var(--border);margin-top:8px;}
+.audit-detail.open{display:block;}
+.audit-detail-grid{display:flex;gap:8px;flex-wrap:wrap;}
+.audit-detail-card{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px 12px;min-width:140px;}
+.adc-region{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.adc-field{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.adc-diff{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;}
+.adc-old{color:var(--red);text-decoration:line-through;font-weight:500;}
+.adc-arr{color:var(--muted);}
+.adc-new{color:var(--green);}
+.audit-expand-hint{font-size:9px;color:var(--muted);margin-left:auto;padding-top:1px;}
+
+/* ── CONFLICT WARNING ── */
+.conflict-box{background:rgba(239,159,39,.08);border:1px solid rgba(239,159,39,.3);border-radius:6px;padding:12px 16px;margin-bottom:12px;}
+.conflict-lbl{font-size:9px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.conflict-list{display:flex;flex-direction:column;gap:4px;}
+.conflict-item{font-size:11px;color:var(--muted);display:flex;align-items:flex-start;gap:6px;line-height:1.5;}
+.conflict-item::before{content:'!';color:var(--amber);font-weight:700;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-l">
+    <div class="hdr-title">Global Configuration Manager</div>
+    <div class="hdr-sub">Trading Operations · Internal Tool</div>
+  </div>
+  <div class="hdr-r">
+    <div class="sync-lbl">Last updated: <span id="syncTime" style="color:var(--white);font-weight:500;"></span></div>
+    <div class="env-pill"><div class="env-dot"></div>PROD</div>
+    <div class="u-pill"><div class="u-av">OA</div><div class="u-nm">ops-admin</div></div>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <div class="fg">
+    <div class="fg-lbl">Region</div>
+    <button class="fbtn active" onclick="filterR('all',this)">All</button>
+    <button class="fbtn" onclick="filterR('DE',this)">Germany</button>
+    <button class="fbtn" onclick="filterR('UK',this)">UK</button>
+    <button class="fbtn" onclick="filterR('US',this)">US</button>
+    <button class="fbtn" onclick="filterR('AU',this)">Australia</button>
+    <button class="fbtn" onclick="filterR('GLOBAL',this)">Global</button>
+  </div>
+  <div class="f-sep"></div>
+  <div class="fg">
+    <div class="fg-lbl">Status</div>
+    <button class="fbtn active">All</button>
+    <button class="fbtn">Active</button>
+    <button class="fbtn">Restricted</button>
+  </div>
+  <div class="hdr-actions">
+    <button class="act-btn">Export CSV</button>
+    <button class="act-btn" onclick="scrollToAudit()">Audit Trail</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- STATUS BANNER -->
+  <div class="status-banner" id="statusBanner">
+    <div class="sb-item"><div class="sb-dot green"></div><div class="sb-label">System Status</div><div class="sb-value" id="sb-status">All regions operational</div></div>
+    <div class="sb-sep"></div>
+    <div class="sb-item"><div class="sb-dot amber"></div><div class="sb-label">Extra Approval Active</div><div class="sb-value" id="sb-approval">—</div></div>
+    <div class="sb-sep"></div>
+    <div class="sb-item"><div class="sb-dot red"></div><div class="sb-label">Restricted Features</div><div class="sb-value" id="sb-restricted">—</div></div>
+    <div class="sb-sep"></div>
+    <div class="sb-item"><div class="sb-dot green"></div><div class="sb-label">Last Change</div><div class="sb-value" id="sb-lastchange">No changes this session</div></div>
+  </div>
+
+  <!-- CONFIG TABLE -->
+  <div class="card">
+    <div class="card-title">Trading Configurations <span class="sub">5 regions · 12 parameters · click toggles to edit manually</span></div>
+    <div class="tw">
+      <table class="cft">
+        <thead><tr>
+          <th>Region</th><th>Crypto</th><th>CFD</th><th>Stocks</th><th>CopyTrader</th>
+          <th>Max Transaction</th><th>Daily Limit</th><th>Max Leverage</th>
+          <th>Risk Level</th><th>KYC</th><th>Extra Approval</th><th>Status</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- AUDIT TRAIL -->
+  <div class="card" id="auditCard">
+    <div class="card-title">Audit Trail <span class="sub">all changes made this session</span></div>
+    <div class="audit-list" id="auditList">
+      <div class="audit-empty">No changes recorded yet this session.</div>
+    </div>
+  </div>
+
+  <!-- AI PANEL -->
+  <div class="ai-card">
+    <div class="ai-hdr">
+      <div class="ai-dot"></div>
+      <div class="ai-title">AI Config Assistant</div>
+      <div class="ai-status-txt" id="aiStatus">Ready — describe a market event or compliance requirement</div>
+    </div>
+    <div class="ai-body">
+      <div class="ai-in">
+        <div class="inp-lbl">Describe situation or request</div>
+        <textarea class="ai-ta" id="aiInput" placeholder="e.g. BTC dropped 20% in the last 24h — assess risk exposure across all regions and apply conservative protective measures according to policy."></textarea>
+        <div class="ai-row">
+          <div class="ai-hint">Enter to analyze &nbsp;·&nbsp; Shift+Enter for new line</div>
+          <button class="ai-btn" id="runBtn" onclick="startAnalysis()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Analyze &amp; Review
+          </button>
+        </div>
+      </div>
+      <div class="ai-sc">
+        <div class="inp-lbl">Scenario library</div>
+        <div class="sc-tabs">
+          <button class="sc-tab active" onclick="switchTab('rd',this)">R&amp;D</button>
+          <button class="sc-tab" onclick="switchTab('trading',this)">Trading</button>
+          <button class="sc-tab" onclick="switchTab('marketing',this)">Marketing</button>
+        </div>
+        <div class="sc-list" id="scList"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ══════════════════ MODAL ══════════════════ -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+
+    <!-- MODAL HEADER -->
+    <div class="modal-hdr">
+      <div class="modal-title" id="modalTitle">AI Analysis in Progress</div>
+      <button class="modal-close" onclick="cancelModal()" id="closeBtn">&#x2715;</button>
+    </div>
+
+    <!-- STEPS -->
+    <div class="steps">
+      <div class="step active" id="step1"><div class="step-num">1</div><div class="step-lbl">Analyzing</div></div>
+      <div class="step" id="step2"><div class="step-num">2</div><div class="step-lbl">Review Changes</div></div>
+      <div class="step" id="step3"><div class="step-num">3</div><div class="step-lbl">Applied</div></div>
+    </div>
+
+    <!-- MODAL BODY -->
+    <div class="modal-body" id="modalBody"></div>
+
+    <!-- MODAL FOOTER -->
+    <div class="modal-ftr" id="modalFtr">
+      <div class="ftr-note" id="ftrNote">Waiting for analysis...</div>
+      <div class="ftr-btns">
+        <button class="btn-cancel" id="cancelBtn" onclick="cancelModal()">Cancel</button>
+        <button class="btn-confirm" id="confirmBtn" onclick="applyChanges()" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Confirm &amp; Apply
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────
+let cfg = {
+  DE:    {name:"Germany",       code:"DE",    crypto:true, cfd:true, stocks:true,copytrader:true, maxTx:10000,dailyLimit:50000, leverage:"1:30",risk:"med",kyc:true,extraApproval:false},
+  UK:    {name:"United Kingdom",code:"UK",    crypto:true, cfd:true, stocks:true,copytrader:true, maxTx:25000,dailyLimit:100000,leverage:"1:30",risk:"low",kyc:true,extraApproval:false},
+  US:    {name:"United States", code:"US",    crypto:false,cfd:false,stocks:true,copytrader:false,maxTx:50000,dailyLimit:200000,leverage:"1:1", risk:"low",kyc:true,extraApproval:true},
+  AU:    {name:"Australia",     code:"AU",    crypto:true, cfd:true, stocks:true,copytrader:true, maxTx:15000,dailyLimit:75000, leverage:"1:30",risk:"med",kyc:true,extraApproval:false},
+  GLOBAL:{name:"Global Default",code:"GLOBAL",crypto:true, cfd:true, stocks:true,copytrader:true, maxTx:10000,dailyLimit:50000, leverage:"1:20",risk:"med",kyc:true,extraApproval:false}
+};
+let auditLog = [];
+let pendingResult = null;
+let barChart = null;
+
+// ── SCENARIOS ─────────────────────────────────────────────────
+const SC = {
+  rd:[
+    {t:"R&D: new CopyTrader feature released — enable for Germany and UK following successful QA sign-off."},
+    {t:"R&D: temporary disable CFD trading for Australia — maintenance window tonight 22:00-02:00."},
+    {t:"R&D: version rollout requires disabling CopyTrader globally for 1 hour — apply and confirm."},
+    {t:"R&D: KYC verification module updated — re-enable KYC requirement for all regions where it was temporarily lifted."}
+  ],
+  trading:[
+    {t:"Trading: ASIC issued updated CFD restriction guidance — apply necessary configuration changes to Australia."},
+    {t:"Trading: new MiFID II directive requires leverage cap update — apply to Germany and UK immediately."},
+    {t:"Trading: regulatory audit scheduled next week — ensure extra approval is active for all medium and high-risk regions."},
+    {t:"Trading: post-audit clearance received for UK and Australia — restore standard operating configuration."}
+  ],
+  marketing:[
+    {t:"Marketing: campaign launching in Germany next week — confirm CopyTrader is enabled and max transaction is set to $15,000."},
+    {t:"Marketing: promotional period for Australia — raise max transaction limit to $20,000 for the next 30 days."},
+    {t:"Marketing: crypto promotion going live for UK — verify crypto trading is enabled and extra approval is off."},
+    {t:"Marketing: global referral campaign launch — confirm CopyTrader is active across all regions except US."}
+  ]
+};
+function renderSc(tab){
+  const el=document.getElementById('scList'); el.innerHTML='';
+  SC[tab].forEach(s=>{
+    const d=document.createElement('div'); d.className='sc-item';
+    d.innerHTML=`<span class="sc-txt">${s.t}</span>`;
+    d.onclick=()=>{document.getElementById('aiInput').value=s.t;document.getElementById('aiInput').focus();};
+    el.appendChild(d);
+  });
+}
+function switchTab(tab,el){
+  document.querySelectorAll('.sc-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); renderSc(tab);
+}
+
+// ── TABLE ─────────────────────────────────────────────────────
+function renderTable(changed={}){
+  const tb=document.getElementById('tbody'); tb.innerHTML='';
+  Object.entries(cfg).forEach(([k,r])=>{
+    const ch=changed[k]||[];
+    const tr=document.createElement('tr');
+    if(ch.length) tr.classList.add('rch');
+    tr.innerHTML=`
+      <td><div class="rc"><div class="rdot"></div><div><div class="rname">${r.name}</div><div class="rcode">${r.code}</div></div></div></td>
+      <td>${tog(k,'crypto',r.crypto,ch)}</td><td>${tog(k,'cfd',r.cfd,ch)}</td>
+      <td>${tog(k,'stocks',r.stocks,ch)}</td><td>${tog(k,'copytrader',r.copytrader,ch)}</td>
+      <td><span class="val${ch.includes('maxTx')?' ch':''}">$${r.maxTx.toLocaleString()}</span></td>
+      <td><span class="val${ch.includes('dailyLimit')?' ch':''}">$${r.dailyLimit.toLocaleString()}</span></td>
+      <td><span class="val${ch.includes('leverage')?' ch':''}">${r.leverage}</span></td>
+      <td>${rb(r.risk,ch.includes('risk'))}</td>
+      <td>${tog(k,'kyc',r.kyc,ch)}</td><td>${tog(k,'extraApproval',r.extraApproval,ch)}</td>
+      <td><div class="sc"><div class="sdot"></div><span class="stxt">Active</span></div></td>`;
+    tb.appendChild(tr);
+  });
+}
+function tog(rk,f,v,ch){return `<button class="tgl ${v?'on':'off'}${ch.includes(f)?' ch':''}" onclick="mt('${rk}','${f}')"></button>`;}
+function rb(r,c){const m={low:'low',med:'med',high:'high'},l={low:'LOW',med:'MEDIUM',high:'HIGH'};return `<span class="risk ${m[r]}${c?' ch':''}">${l[r]}</span>`;}
+function mt(rk,f){cfg[rk][f]=!cfg[rk][f];renderTable();}
+function filterR(r,el){
+  document.querySelectorAll('.filters .fbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#tbody tr').forEach(row=>{
+    if(r==='all'){row.style.display='';return;}
+    row.style.display=row.querySelector('.rcode')?.textContent===r?'':'none';
+  });
+}
+
+// ── FORMAT HELPERS ────────────────────────────────────────────
+const fv=(v,f)=>typeof v==='boolean'?(v?'ON':'OFF'):(f==='maxTx'||f==='dailyLimit')?`$${Number(v).toLocaleString()}`:f==='risk'?v.toUpperCase():String(v);
+const fl=f=>({crypto:'Crypto Trading',cfd:'CFD Trading',stocks:'Stock Trading',copytrader:'CopyTrader',maxTx:'Max Transaction',dailyLimit:'Daily Limit',leverage:'Max Leverage',risk:'Risk Level',kyc:'KYC Required',extraApproval:'Extra Approval'}[f]||f);
+
+// ── LOCAL AI SIMULATION ENGINE ────────────────────────────────
+function analyzeLocally(input) {
+  const txt = input.toLowerCase();
+  const changes = [];
+  const steps = [];
+  let summary = '';
+  let reasoning = '';
+
+  // Detect request source
+  const isRD       = /r&d|r&amp;d|r and d|engineering|dev|maintenance|rollout|release|qa/.test(txt);
+  const isTrading  = /trading|asic|mifid|regulatory|audit|compliance|directive|clearance|post.audit|restore/.test(txt);
+  const isMarketing= /marketing|campaign|promo|promotion|launch/.test(txt);
+
+  // Detect actions
+  const isEnable        = /enable|activate|turn on|confirm.*active|verify.*enabled/.test(txt);
+  const isDisable       = /disable|deactivate|turn off|temporarily off|maintenance/.test(txt);
+  const isCopyTrader    = /copytrader|copy trader/.test(txt);
+  const isCFD           = /cfd/.test(txt);
+  const isCrypto        = /crypto/.test(txt);
+  const isKYC           = /kyc/.test(txt);
+  const isExtraApproval = /extra approval|additional approval/.test(txt);
+  const isLeverage      = /leverage/.test(txt);
+  const isMaxTx         = /max transaction|transaction limit/.test(txt);
+  const isAudit         = /audit/.test(txt) && !/post.audit|clearance/.test(txt);
+  const isPostAudit     = /post.audit|clearance|restore/.test(txt);
+  const isMiFID         = /mifid/.test(txt);
+  const isASIC          = /asic/.test(txt);
+
+  // Detect regions
+  const isGermany    = /germany|german|\bde\b/.test(txt);
+  const isUK         = /\buk\b|united kingdom|britain/.test(txt);
+  const isAU         = /\bau\b|australia/.test(txt);
+  const isUS         = /\bus\b|united states/.test(txt);
+  const isEU         = /\beu\b|europe/.test(txt) || (isGermany && isUK);
+  const isAllRegions = /all region|global|everywhere/.test(txt) || (!isGermany && !isUK && !isAU && !isUS && !isEU);
+  const isAllExceptUS= /except us|all.*except/.test(txt);
+
+  steps.push('Parsing request source and intent...');
+
+  const affected = [];
+  if (isAllRegions) {
+    affected.push('DE','UK','AU','GLOBAL');
+  } else if (isAllExceptUS) {
+    affected.push('DE','UK','AU','GLOBAL');
+  } else {
+    if (isGermany || isEU) affected.push('DE');
+    if (isUK || isEU) affected.push('UK');
+    if (isAU) affected.push('AU');
+    if (isUS) affected.push('US');
+  }
+  if (!affected.length) affected.push('DE','UK','AU','GLOBAL');
+
+  steps.push(`Identified affected regions: ${affected.join(', ')}`);
+
+  // R&D: Enable/disable CopyTrader
+  if (isCopyTrader) {
+    steps.push(`Processing CopyTrader ${isEnable ? 'activation' : 'deactivation'} request`);
+    affected.forEach(rk => {
+      if (rk === 'US') return;
+      const r = cfg[rk];
+      if (isEnable && !r.copytrader) changes.push({region:rk,field:'copytrader',oldValue:false,newValue:true});
+      if (isDisable && r.copytrader) changes.push({region:rk,field:'copytrader',oldValue:true,newValue:false});
+    });
+    summary = `CopyTrader ${isEnable?'enabled':'disabled'} for ${affected.filter(r=>r!=='US').join(', ')} as requested.`;
+    reasoning = `${isRD?'R&D':'Operations'} request processed. CopyTrader ${isEnable?'activated':'deactivated'} for the specified regions. US excluded per regulatory constraints.`;
+  }
+
+  // R&D / Trading: Enable/disable CFD
+  if (isCFD) {
+    steps.push(`Processing CFD ${isEnable ? 'activation' : 'deactivation'} request`);
+    affected.forEach(rk => {
+      if (rk === 'US') return;
+      const r = cfg[rk];
+      if (isEnable && !r.cfd) changes.push({region:rk,field:'cfd',oldValue:false,newValue:true});
+      if (isDisable && r.cfd) changes.push({region:rk,field:'cfd',oldValue:true,newValue:false});
+    });
+    if (!summary) {
+      summary = `CFD trading ${isEnable?'enabled':'disabled'} for ${affected.filter(r=>r!=='US').join(', ')}.`;
+      reasoning = `${isASIC?'ASIC regulatory guidance':'Operations request'} processed. CFD trading ${isEnable?'activated':'deactivated'} for the specified regions.`;
+    }
+  }
+
+  // R&D: Enable/disable Crypto
+  if (isCrypto && !isCFD) {
+    steps.push(`Processing Crypto trading ${isEnable ? 'activation' : 'deactivation'} request`);
+    affected.forEach(rk => {
+      if (rk === 'US') return;
+      const r = cfg[rk];
+      if (isEnable && !r.crypto) changes.push({region:rk,field:'crypto',oldValue:false,newValue:true});
+      if (isDisable && r.crypto) changes.push({region:rk,field:'crypto',oldValue:true,newValue:false});
+    });
+    if (!summary) {
+      summary = `Crypto trading ${isEnable?'enabled':'disabled'} for ${affected.filter(r=>r!=='US').join(', ')}.`;
+      reasoning = `Request processed. Crypto trading ${isEnable?'activated':'deactivated'} for specified regions. US hard limit respected.`;
+    }
+  }
+
+  // R&D: KYC update
+  if (isKYC) {
+    steps.push('Processing KYC requirement update');
+    affected.forEach(rk => {
+      const r = cfg[rk];
+      if (isEnable && !r.kyc) changes.push({region:rk,field:'kyc',oldValue:false,newValue:true});
+      if (isDisable && r.kyc) changes.push({region:rk,field:'kyc',oldValue:true,newValue:false});
+    });
+    if (!summary) {
+      summary = `KYC requirement ${isEnable?'re-enabled':'temporarily disabled'} for affected regions.`;
+      reasoning = `R&D module update processed. KYC verification ${isEnable?'restored':'suspended'} as requested for the specified regions.`;
+    }
+  }
+
+  // Trading: Audit preparation
+  if (isAudit) {
+    steps.push('Applying audit preparation policy — enabling extra approval for medium/high-risk regions');
+    Object.keys(cfg).forEach(rk => {
+      const r = cfg[rk];
+      if ((r.risk === 'med' || r.risk === 'high') && !r.extraApproval) {
+        changes.push({region:rk,field:'extraApproval',oldValue:false,newValue:true});
+      }
+    });
+    summary = `Audit preparation complete — extra approval enabled for all medium and high-risk regions.`;
+    reasoning = `Pre-audit compliance requirement processed. Extra approval enabled for DE, AU, and GLOBAL (medium-risk) to ensure manual oversight on all trades ahead of the regulatory review.`;
+  }
+
+  // Trading: MiFID II
+  if (isMiFID) {
+    steps.push('Applying MiFID II leverage constraints for EU regions');
+    ['DE','UK'].forEach(rk => {
+      const r = cfg[rk];
+      if (r.leverage !== '1:30') changes.push({region:rk,field:'leverage',oldValue:r.leverage,newValue:'1:30'});
+      if (!r.extraApproval) changes.push({region:rk,field:'extraApproval',oldValue:false,newValue:true});
+    });
+    if (!summary) {
+      summary = `MiFID II compliance applied — EU regions capped at 1:30 leverage with extra approval enabled.`;
+      reasoning = `MiFID II directive requires maximum 1:30 leverage for retail clients in EU jurisdictions. Applied to Germany and UK. Extra approval added as an additional compliance safeguard.`;
+    }
+  }
+
+  // Trading: ASIC
+  if (isASIC && !isCFD) {
+    steps.push('Applying ASIC regulatory constraints for Australia');
+    const r = cfg['AU'];
+    if (r.cfd) changes.push({region:'AU',field:'cfd',oldValue:true,newValue:false});
+    if (!r.extraApproval) changes.push({region:'AU',field:'extraApproval',oldValue:false,newValue:true});
+    if (!summary) {
+      summary = `ASIC compliance applied — CFD disabled and extra approval enabled for Australia.`;
+      reasoning = `ASIC regulatory guidance processed. CFD trading disabled for AU per updated distribution obligations. Extra approval enabled as a compliance safeguard.`;
+    }
+  }
+
+  // Trading: Post-audit restore
+  if (isPostAudit) {
+    steps.push('Processing post-audit clearance — restoring standard configuration');
+    affected.forEach(rk => {
+      const r = cfg[rk];
+      if (r.extraApproval) changes.push({region:rk,field:'extraApproval',oldValue:true,newValue:false});
+    });
+    summary = `Post-audit clearance applied — extra approval lifted for ${affected.join(', ')}.`;
+    reasoning = `Regulatory clearance received. Extra approval requirements removed for the specified regions as the audit period has concluded. Standard operating configuration restored.`;
+  }
+
+  // Marketing: Max Transaction update
+  if (isMarketing && isMaxTx) {
+    steps.push('Processing Marketing max transaction update request');
+    const match = txt.match(/\$?([\d,]+),?000|\$?([\d]+)k/);
+    affected.forEach(rk => {
+      const r = cfg[rk];
+      let newVal = 15000;
+      if (txt.includes('20,000') || txt.includes('$20k') || txt.includes('20k')) newVal = 20000;
+      else if (txt.includes('15,000') || txt.includes('$15k') || txt.includes('15k')) newVal = 15000;
+      if (newVal !== r.maxTx) changes.push({region:rk,field:'maxTx',oldValue:r.maxTx,newValue:newVal});
+    });
+    if (!summary) {
+      summary = `Max transaction limit updated for ${affected.join(', ')} as requested by Marketing.`;
+      reasoning = `Marketing campaign requirement processed. Transaction limit adjusted to support promotional activity for the specified regions and duration.`;
+    }
+  }
+
+  // Marketing: verify/confirm active state
+  if (isMarketing && isEnable && !isMaxTx) {
+    steps.push('Verifying configuration for Marketing campaign requirements');
+    affected.forEach(rk => {
+      if (rk === 'US') return;
+      const r = cfg[rk];
+      if (isCopyTrader && !r.copytrader) changes.push({region:rk,field:'copytrader',oldValue:false,newValue:true});
+      if (isCrypto && !r.crypto) changes.push({region:rk,field:'crypto',oldValue:false,newValue:true});
+      if (isExtraApproval && r.extraApproval) changes.push({region:rk,field:'extraApproval',oldValue:true,newValue:false});
+    });
+    if (!summary) {
+      summary = `Configuration verified and aligned with Marketing campaign requirements.`;
+      reasoning = `Marketing launch requirements processed. Configuration adjusted to ensure campaign features are active for the specified regions.`;
+    }
+  }
+
+  // No changes
+  if (changes.length === 0) {
+    steps.push('Evaluating request against current configuration...');
+    steps.push('No actionable changes identified');
+    steps.push('Current configuration already matches request requirements');
+    return {
+      changes: [],
+      summary: 'No configuration changes required — current state already matches the request.',
+      reasoning: '',
+      thinkingSteps: steps
+    };
+  }
+
+  steps.push(`Preparing ${changes.length} configuration change${changes.length!==1?'s':''}...`);
+
+  // Deduplicate
+  const seen = {};
+  changes.forEach(c => { seen[`${c.region}:${c.field}`] = c; });
+  return { changes: Object.values(seen), summary, reasoning, thinkingSteps: steps };
+}
+
+// ── MODAL CONTROL ─────────────────────────────────────────────
+function openModal(){document.getElementById('overlay').classList.add('vis');}
+function closeModal(){document.getElementById('overlay').classList.remove('vis');}
+
+function setStep(n){
+  [1,2,3].forEach(i=>{
+    const s=document.getElementById(`step${i}`);
+    s.className='step';
+    if(i<n) s.classList.add('done');
+    if(i===n) s.classList.add('active');
+  });
+}
+
+function cancelModal(){
+  if(pendingResult){
+    addAudit(pendingResult,'cancelled');
+    pendingResult=null;
+  }
+  closeModal();
+  document.getElementById('runBtn').disabled=false;
+}
+
+// ── STEP 1: THINKING STREAM ───────────────────────────────────
+function showThinkingPanel(requestText){
+  setStep(1);
+  document.getElementById('modalTitle').textContent='AI Analysis in Progress';
+  document.getElementById('ftrNote').textContent='Analyzing your request...';
+  document.getElementById('confirmBtn').style.display='none';
+  document.getElementById('closeBtn').style.pointerEvents='none';
+  document.getElementById('closeBtn').style.opacity='.3';
+
+  const body=document.getElementById('modalBody');
+  body.innerHTML=`
+    <div class="thinking-panel">
+      <div class="thinking-request">
+        <div class="req-lbl">Request</div>
+        <div class="req-txt">${requestText}</div>
+      </div>
+      <div class="thinking-stream">
+        <div class="stream-lbl"><div class="spin"></div>Processing...</div>
+        <div class="stream-lines" id="streamLines"></div>
+      </div>
+    </div>`;
+}
+
+function streamThinking(steps, onDone){
+  const container=document.getElementById('streamLines');
+  let i=0;
+  function next(){
+    if(i>=steps.length){setTimeout(onDone,400);return;}
+    const line=document.createElement('div');
+    line.className='stream-line';
+    line.style.animationDelay=`${i*0.1}s`;
+    const isLast=i===steps.length-1;
+    line.innerHTML=`<span class="sl-text ${isLast?'highlight':'done'}">${steps[i]}</span>`;
+    container.appendChild(line);
+    setTimeout(()=>{
+      if(!isLast) line.innerHTML+=`<span class="sl-check">&#10003;</span>`;
+      i++; next();
+    }, 420);
+  }
+  next();
+}
+
+// ── STEP 2: REVIEW PANEL ─────────────────────────────────────
+function showReviewPanel(result){
+  setStep(2);
+  document.getElementById('modalTitle').textContent='Review Proposed Changes';
+  document.getElementById('ftrNote').textContent=`${result.changes.length} change${result.changes.length!==1?'s':''} pending your approval`;
+  document.getElementById('confirmBtn').style.display='flex';
+  document.getElementById('closeBtn').style.pointerEvents='';
+  document.getElementById('closeBtn').style.opacity='';
+
+  // Group by region
+  const byRegion={};
+  result.changes.forEach(c=>{
+    if(!byRegion[c.region]) byRegion[c.region]=[];
+    byRegion[c.region].push(c);
+  });
+
+  const body=document.getElementById('modalBody');
+  body.innerHTML='';
+  const panel=document.createElement('div');
+  panel.className='review-panel';
+
+  // Conflict detection
+  const conflicts = detectConflicts(result.changes);
+  if (conflicts.length > 0) {
+    const cb = document.createElement('div');
+    cb.className = 'conflict-box';
+    cb.innerHTML = `<div class="conflict-lbl">&#9888; Conflicts Detected — the following changes were blocked</div><div class="conflict-list">${conflicts.map(c=>`<div class="conflict-item">${c}</div>`).join('')}</div>`;
+    panel.appendChild(cb);
+    // Remove blocked changes
+    result.changes = result.changes.filter(c => {
+      if (c.region==='US' && (c.field==='crypto'||c.field==='cfd'||c.field==='copytrader') && c.newValue===true) return false;
+      return true;
+    });
+    document.getElementById('ftrNote').textContent = `${result.changes.length} change${result.changes.length!==1?'s':''} pending · ${conflicts.length} blocked`;
+  }
+
+  // Summary box
+  panel.innerHTML=`
+    <div class="review-summary-box">
+      <div class="rsb-lbl">AI Summary</div>
+      <div class="rsb-txt">${result.summary}</div>
+    </div>`;
+
+  // Change cards grid
+  const grid=document.createElement('div');
+  grid.className='review-grid';
+  Object.entries(byRegion).forEach(([rk,changes])=>{
+    const r=cfg[rk]; if(!r) return;
+    const card=document.createElement('div');
+    card.className='rcard';
+    card.innerHTML=`
+      <div class="rcard-region">${r.name} · ${r.code}</div>
+      <div class="rcard-changes">
+        ${changes.map(c=>`
+          <div class="rchange">
+            <div class="rchange-field">${fl(c.field)}</div>
+            <div class="rchange-diff">
+              <span class="r-old">${fv(c.oldValue,c.field)}</span>
+              <span class="r-arr">&#8594;</span>
+              <span class="r-new">${fv(c.newValue,c.field)}</span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    grid.appendChild(card);
+  });
+  panel.appendChild(grid);
+
+  // Toggle preview — show affected rows with new state highlighted
+  const boolChanges=result.changes.filter(c=>typeof c.newValue==='boolean');
+  if(boolChanges.length>0){
+    const tp=document.createElement('div');
+    tp.className='chart-section';
+    tp.innerHTML=`<div class="chart-lbl">Toggle Preview — new state after applying changes</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 10px;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);">Region</th>
+        <th style="text-align:left;padding:6px 10px;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);">Parameter</th>
+        <th style="text-align:left;padding:6px 10px;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);">Current</th>
+        <th style="text-align:left;padding:6px 10px;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);">After Applying</th>
+      </tr></thead>
+      <tbody id="togglePreviewBody"></tbody>
+    </table>`;
+    panel.appendChild(tp);
+    setTimeout(()=>{
+      const tbody=document.getElementById('togglePreviewBody');
+      if(!tbody) return;
+      boolChanges.forEach(c=>{
+        const r=cfg[c.region]; if(!r) return;
+        const row=document.createElement('tr');
+        row.style.borderBottom='1px solid rgba(26,26,94,.4)';
+        const oldTgl=`<button style="width:32px;height:18px;border-radius:9px;border:none;position:relative;background:${c.oldValue?'var(--green)':'#1a1a4e'};cursor:default;" disabled><span style="position:absolute;width:12px;height:12px;border-radius:50%;background:${c.oldValue?'#fff':'var(--muted)'};top:3px;left:${c.oldValue?'17px':'3px'};"></span></button>`;
+        const newTgl=`<button style="width:32px;height:18px;border-radius:9px;border:2px solid var(--green);position:relative;background:${c.newValue?'var(--green)':'#1a1a4e'};cursor:default;box-shadow:0 0 8px var(--gglow);" disabled><span style="position:absolute;width:12px;height:12px;border-radius:50%;background:${c.newValue?'#fff':'var(--muted)'};top:1px;left:${c.newValue?'15px':'1px'};"></span></button>`;
+        row.innerHTML=`
+          <td style="padding:8px 10px;color:var(--white);font-weight:600;">${r.name}</td>
+          <td style="padding:8px 10px;color:var(--muted);">${fl(c.field)}</td>
+          <td style="padding:8px 10px;">${oldTgl}</td>
+          <td style="padding:8px 10px;">${newTgl} <span style="margin-left:6px;font-size:10px;color:var(--green);font-weight:600;">${c.newValue?'ON':'OFF'}</span></td>`;
+        tbody.appendChild(row);
+      });
+    },30);
+  }
+
+  // Chart — numeric changes only
+  const numericChanges=result.changes.filter(c=>typeof c.newValue==='number');
+  if(numericChanges.length>0){
+    const cs=document.createElement('div');
+    cs.className='chart-section';
+    cs.innerHTML=`<div class="chart-lbl">Numeric Changes — Before vs After</div><div class="chart-wrap"><canvas id="reviewChart"></canvas></div>`;
+    panel.appendChild(cs);
+  }
+
+  // Reasoning
+  if(result.reasoning){
+    const rr=document.createElement('div');
+    rr.className='review-reasoning';
+    rr.innerHTML=`<div class="rr-lbl">Policy Rationale</div><div class="rr-txt">${result.reasoning}</div>`;
+    panel.appendChild(rr);
+  }
+
+  body.appendChild(panel);
+
+  // Draw chart after DOM insert
+  if(numericChanges.length>0){
+    setTimeout(()=>{
+      const ctx=document.getElementById('reviewChart');
+      if(!ctx) return;
+      if(barChart) barChart.destroy();
+      const labels=numericChanges.map(c=>`${cfg[c.region]?.code||c.region} · ${fl(c.field)}`);
+      barChart=new Chart(ctx,{
+        type:'bar',
+        data:{
+          labels,
+          datasets:[
+            {label:'Before',data:numericChanges.map(c=>c.oldValue),backgroundColor:'rgba(226,75,74,0.5)',borderColor:'rgba(226,75,74,0.8)',borderWidth:1,borderRadius:3},
+            {label:'After', data:numericChanges.map(c=>c.newValue),backgroundColor:'rgba(106,174,34,0.5)',borderColor:'rgba(106,174,34,0.8)',borderWidth:1,borderRadius:3}
+          ]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{labels:{color:'#8888aa',font:{family:'Montserrat',size:10}}},tooltip:{callbacks:{label:ctx=>`$${ctx.raw.toLocaleString()}`}}},
+          scales:{
+            x:{ticks:{color:'#8888aa',font:{family:'Montserrat',size:9}},grid:{color:'rgba(26,26,94,.5)'}},
+            y:{ticks:{color:'#8888aa',font:{family:'Montserrat',size:9},callback:v=>`$${v.toLocaleString()}`},grid:{color:'rgba(26,26,94,.5)'}}
+          }
+        }
+      });
+    },50);
+  }
+}
+
+// ── STEP 3: DONE ─────────────────────────────────────────────
+function showDonePanel(count){
+  setStep(3);
+  document.getElementById('modalTitle').textContent='Changes Applied Successfully';
+  document.getElementById('ftrNote').textContent='Configuration has been updated.';
+  document.getElementById('confirmBtn').style.display='none';
+  document.getElementById('cancelBtn').textContent='Close';
+  document.getElementById('closeBtn').style.pointerEvents='';
+  document.getElementById('closeBtn').style.opacity='';
+
+  document.getElementById('modalBody').innerHTML=`
+    <div class="done-panel">
+      <div class="done-icon">&#10003;</div>
+      <div class="done-title">Configuration Updated</div>
+      <div class="done-sub">All changes have been applied to the trading configuration system and recorded in the audit trail.</div>
+      <div class="done-count">${count} parameter${count!==1?'s':''} updated across production</div>
+    </div>`;
+}
+
+// ── MAIN FLOW ─────────────────────────────────────────────────
+function startAnalysis(){
+  const input=document.getElementById('aiInput').value.trim();
+  if(!input) return;
+  document.getElementById('runBtn').disabled=true;
+  openModal();
+  showThinkingPanel(input);
+
+  // Run local simulation
+  const result = analyzeLocally(input);
+  pendingResult = result;
+  pendingResult._input = input;
+  streamThinking(result.thinkingSteps, ()=>showReviewPanel(result));
+}
+
+function applyChanges(){
+  if(!pendingResult?.changes?.length){closeModal();return;}
+  const ck={};
+  pendingResult.changes.forEach(c=>{
+    if(cfg[c.region]&&c.field in cfg[c.region]){
+      cfg[c.region][c.field]=c.newValue;
+      (ck[c.region]=ck[c.region]||[]).push(c.field);
+    }
+  });
+  renderTable(ck);
+  addAudit(pendingResult,'applied');
+  showDonePanel(pendingResult.changes.length);
+  document.getElementById('syncTime').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('runBtn').disabled=false;
+  pendingResult=null;
+  // reset cancel btn text
+  document.getElementById('cancelBtn').textContent='Cancel';
+}
+
+// ── STATUS BANNER ─────────────────────────────────────────────
+function updateBanner(lastSummary) {
+  const approvalRegions = Object.entries(cfg).filter(([,r])=>r.extraApproval).map(([,r])=>r.name);
+  const restrictedItems = [];
+  Object.entries(cfg).forEach(([,r])=>{
+    if(!r.crypto && r.code!=='US') restrictedItems.push(`Crypto ${r.code}`);
+    if(!r.cfd && r.code!=='US') restrictedItems.push(`CFD ${r.code}`);
+    if(!r.copytrader && r.code!=='US') restrictedItems.push(`CopyTrader ${r.code}`);
+  });
+  document.getElementById('sb-approval').textContent = approvalRegions.length ? approvalRegions.map(n=>n.split(' ')[0]).join(', ') : 'None';
+  document.getElementById('sb-restricted').textContent = restrictedItems.length ? `${restrictedItems.length} item${restrictedItems.length!==1?'s':''}` : 'None';
+  if(lastSummary) document.getElementById('sb-lastchange').textContent = lastSummary.length>50?lastSummary.slice(0,50)+'…':lastSummary;
+}
+
+// ── CONFLICT DETECTION ────────────────────────────────────────
+function detectConflicts(changes) {
+  const conflicts = [];
+  changes.forEach(c => {
+    if (c.region==='US' && (c.field==='crypto'||c.field==='cfd') && c.newValue===true) {
+      conflicts.push(`Cannot enable ${c.field==='crypto'?'Crypto':'CFD'} for US — regulatory hard limit (SEC/CFTC). Change blocked.`);
+    }
+    if ((c.field==='risk') && c.newValue==='high' && !changes.find(x=>x.region===c.region&&x.field==='extraApproval'&&x.newValue===true)) {
+      const r = cfg[c.region];
+      if (!r.extraApproval) conflicts.push(`Setting ${cfg[c.region]?.name} to HIGH risk requires Extra Approval to be enabled simultaneously.`);
+    }
+    if (c.region==='US' && c.field==='copytrader' && c.newValue===true) {
+      conflicts.push(`Cannot enable CopyTrader for US — not available under current US regulatory framework.`);
+    }
+  });
+  return [...new Set(conflicts)];
+}
+
+// ── AUDIT TRAIL ───────────────────────────────────────────────
+function addAudit(result, status) {
+  auditLog.unshift({
+    time: new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    status,
+    summary: result.summary||'No summary',
+    count: result.changes?.length||0,
+    input: result._input||'',
+    changes: result.changes||[]
+  });
+  renderAudit();
+  if(status==='applied') updateBanner(result.summary);
+}
+
+function renderAudit() {
+  const el = document.getElementById('auditList');
+  if (!auditLog.length) { el.innerHTML='<div class="audit-empty">No changes recorded yet this session.</div>'; return; }
+  el.innerHTML = '';
+  auditLog.forEach((e, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'border-bottom:1px solid rgba(26,26,94,.5);padding:8px 0;';
+    const row = document.createElement('div');
+    row.className = 'audit-item';
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:2px 0;';
+    const hasDetail = e.changes && e.changes.length > 0;
+    row.innerHTML = `
+      <div class="audit-time">${e.time}</div>
+      <div class="audit-badge ${e.status}">${e.status.toUpperCase()}</div>
+      <div class="audit-summary">${e.summary}</div>
+      <div class="audit-count">${e.status==='applied'?`${e.count} change${e.count!==1?'s':''}`:'-'}</div>
+      ${hasDetail?`<div class="audit-expand-hint" id="hint-${i}">&#9660; details</div>`:''}`;
+    if (hasDetail) {
+      const detail = document.createElement('div');
+      detail.className = 'audit-detail';
+      detail.id = `detail-${i}`;
+      const grid = document.createElement('div');
+      grid.className = 'audit-detail-grid';
+      e.changes.forEach(c => {
+        const r = cfg[c.region];
+        const card = document.createElement('div');
+        card.className = 'audit-detail-card';
+        card.innerHTML = `<div class="adc-region">${r?r.name:c.region}</div><div class="adc-field">${fl(c.field)}</div><div class="adc-diff"><span class="adc-old">${fv(c.oldValue,c.field)}</span><span class="adc-arr">&#8594;</span><span class="adc-new">${fv(c.newValue,c.field)}</span></div>`;
+        grid.appendChild(card);
+      });
+      detail.appendChild(grid);
+      row.onclick = () => {
+        const isOpen = detail.classList.contains('open');
+        detail.classList.toggle('open');
+        const hint = document.getElementById(`hint-${i}`);
+        if(hint) hint.innerHTML = isOpen ? '&#9660; details' : '&#9650; details';
+      };
+      wrap.appendChild(row);
+      wrap.appendChild(detail);
+    } else {
+      wrap.appendChild(row);
+    }
+    el.appendChild(wrap);
+  });
+}
+
+function scrollToAudit(){document.getElementById('auditCard').scrollIntoView({behavior:'smooth'});}
+
+// ── ENTER KEY ─────────────────────────────────────────────────
+document.getElementById('aiInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();startAnalysis();}
+});
+
+// ── INIT ──────────────────────────────────────────────────────
+renderTable();
+renderSc('rd');
+updateBanner(null);
+document.getElementById('syncTime').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+</script>
+</body>
+</html>
